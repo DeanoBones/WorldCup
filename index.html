@@ -6,7 +6,6 @@
 <title>⚽ World Cup Challenge</title>
 
 <style>
-/* ===== YOUR ORIGINAL STYLES (UNCHANGED) ===== */
 *{
     margin:0;
     padding:0;
@@ -21,6 +20,7 @@ body{
     background:#020617;
 }
 
+/* 🔴 LIVE TICKER */
 .livebar{
     position:fixed;
     top:0;
@@ -47,6 +47,7 @@ body{
     100%{transform:translateX(-100%);}
 }
 
+/* 🌍 BACKGROUND */
 .bg{
     position:fixed;
     inset:-50%;
@@ -63,6 +64,7 @@ body{
     100%{transform:rotate(360deg) scale(1.2);}
 }
 
+/* 🏆 TROPHY */
 .trophy{
     position:fixed;
     top:50%;
@@ -81,6 +83,7 @@ body{
     50%{transform:translate(-50%,-50%) scale(1.05); opacity:0.1;}
 }
 
+/* PARTICLES */
 .particles{
     position:fixed;
     inset:0;
@@ -104,6 +107,7 @@ body{
     to{transform:translateY(-10vh); opacity:0;}
 }
 
+/* CONTAINER */
 .container{
     position:relative;
     z-index:2;
@@ -114,7 +118,7 @@ body{
 
 .hero{
     text-align:center;
-    margin-bottom:40px;
+    margin-bottom:20px;
 }
 
 .hero h1{
@@ -126,12 +130,29 @@ body{
     color:#cbd5e1;
 }
 
+/* BUTTON */
+button{
+    background:#1f2937;
+    color:white;
+    border:1px solid #374151;
+    padding:10px 15px;
+    border-radius:10px;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+#rpcResult{
+    margin-top:10px;
+    color:#cbd5e1;
+}
+
+/* PODIUM */
 .podium{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
     gap:20px;
     align-items:end;
-    margin-bottom:40px;
+    margin-top:30px;
 }
 
 .place{
@@ -171,6 +192,10 @@ body{
     <div class="hero">
         <h1>⚽ World Cup Challenge</h1>
         <p>$1 per match • Highest balance wins</p>
+
+        <!-- SAFE RPC TEST -->
+        <button id="rpcTestBtn">Test RPC Connection</button>
+        <div id="rpcResult"></div>
     </div>
 
     <div id="content"></div>
@@ -180,19 +205,18 @@ body{
 <script>
 
 const START_BALANCE = 100;
-
-// pUSD contract
 const PUSD_CONTRACT = "0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb";
 
-// IMPORTANT: must be real Polygon addresses
 const players = [
     { name:"Bucky", wallet:"0xa4ddc37CC742ee42F048DE46d17392cDDbcCF17F" },
     { name:"Aust", wallet:"0x642bf0638DA4a03d92CE6c1D2c45CC2916AD33ec" },
     { name:"John", wallet:"0xCc126ee5d88484ea8B46451a5870f20950297aC5" }
 ];
 
+// particles
 function createParticles(){
     const container = document.getElementById("particles");
+
     for(let i=0;i<20;i++){
         const s = document.createElement("span");
         s.style.left = Math.random()*100 + "%";
@@ -202,7 +226,7 @@ function createParticles(){
 }
 createParticles();
 
-// ✅ FIXED BALANCE (stable RPC)
+// REAL BALANCE (stable RPC)
 async function getBalance(wallet){
     try{
 
@@ -213,7 +237,7 @@ async function getBalance(wallet){
 
         const data = "0x70a08231" + address;
 
-        const res = await fetch("https://rpc.ankr.com/polygon",{
+        const res = await fetch("https://rpc.ankr.com/polygon", {
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
@@ -295,6 +319,34 @@ async function refresh(){
 
 refresh();
 setInterval(refresh,30000);
+
+// SAFE RPC TEST BUTTON
+document.getElementById("rpcTestBtn").onclick = async function(){
+
+    document.getElementById("rpcResult").textContent = "Testing...";
+
+    try{
+        const res = await fetch("https://rpc.ankr.com/polygon", {
+            method:"POST",
+            headers:{"Content-Type":"application/json"},
+            body:JSON.stringify({
+                jsonrpc:"2.0",
+                id:1,
+                method:"eth_blockNumber",
+                params:[]
+            })
+        });
+
+        const json = await res.json();
+
+        document.getElementById("rpcResult").textContent =
+            "RPC OK: " + json.result;
+
+    }catch(err){
+        document.getElementById("rpcResult").textContent =
+            "RPC FAILED: " + err.message;
+    }
+};
 
 </script>
 

@@ -202,11 +202,12 @@ body{
 <script>
 
 const START_BALANCE = 100;
+const PUSD_CONTRACT = "0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb";
 
 const players = [
-{ name:"Bucky", wallet:"0x9509ff52c93ffb76219b185ab7d005db681d7050" },
-{ name:"Aust", wallet:"0x75f630b83a28c1d7da704427f2c0c74f48ffa79e" },
-{ name:"John", wallet:"0x2ec609f159cf1f12452ece758d6efc5b7f666b1d" }
+{ name:"Bucky", wallet:"0xa4ddc37CC742ee42F048DE46d17392cDDbcCF17F" },
+{ name:"Aust", wallet:"0x642bf0638DA4a03d92CE6c1D2c45CC2916AD33ec" },
+{ name:"John", wallet:"0xCc126ee5d88484ea8B46451a5870f20950297aC5" }
 ];
 
 function createParticles(){
@@ -223,20 +224,44 @@ createParticles();
 
 async function getBalance(wallet){
     try{
-        const res = await fetch(
-            `https://data-api.polymarket.com/value?user=${wallet}`
-        );
 
-        const data = await res.json();
+        const address =
+            wallet.toLowerCase()
+                  .replace("0x","")
+                  .padStart(64,"0");
 
-        return Number(data?.[0]?.value || 0);
+        const data = "0x70a08231" + address;
+
+        const res = await fetch("https://polygon.llamarpc.com",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({
+                jsonrpc:"2.0",
+                id:1,
+                method:"eth_call",
+                params:[
+                    {
+                        to:PUSD_CONTRACT,
+                        data:data
+                    },
+                    "latest"
+                ]
+            })
+        });
+
+        const json = await res.json();
+
+        if(!json.result) return 0;
+
+        return Number(BigInt(json.result)) / 1_000_000;
 
     }catch(err){
         console.error(err);
         return 0;
     }
 }
-
 function pnl(b){
     return ((b-START_BALANCE)/START_BALANCE)*100;
 }

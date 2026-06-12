@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ World Cup Challenge</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
+    color:white;
+    min-height:100vh;
+    overflow-x:hidden;
+    background:#020617;
+}
+
+/* 🔴 LIVE TICKER */
+.livebar{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    background:rgba(255,0,0,0.15);
+    backdrop-filter:blur(10px);
+    z-index:1000;
+    overflow:hidden;
+    padding:10px 0;
+}
+
+.ticker{
+    display:inline-block;
+    white-space:nowrap;
+    padding-left:100%;
+    animation:scroll 18s linear infinite;
+    font-weight:700;
+    letter-spacing:1px;
+}
+
+@keyframes scroll{
+    0%{transform:translateX(0);}
+    100%{transform:translateX(-100%);}
+}
+
+/* 🌍 BACKGROUND */
+.bg{
+    position:fixed;
+    inset:-50%;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(14,165,233,0.2), transparent 40%),
+        radial-gradient(circle at 80% 30%, rgba(34,197,94,0.2), transparent 40%),
+        radial-gradient(circle at 50% 80%, rgba(234,179,8,0.2), transparent 40%);
+    animation: move 12s linear infinite;
+    z-index:-3;
+}
+
+@keyframes move{
+    0%{transform:rotate(0deg) scale(1);}
+    100%{transform:rotate(360deg) scale(1.2);}
+}
+
+/* 🏆 TROPHY */
+.trophy{
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    height:75vh;
+    opacity:0.07;
+    z-index:-1;
+    pointer-events:none;
+    filter: drop-shadow(0 0 30px rgba(255,215,0,0.15));
+    animation: breathe 5s ease-in-out infinite;
+}
+
+@keyframes breathe{
+    0%,100%{transform:translate(-50%,-50%) scale(1); opacity:0.06;}
+    50%{transform:translate(-50%,-50%) scale(1.05); opacity:0.1;}
+}
+
+/* PARTICLES */
+.particles{
+    position:fixed;
+    inset:0;
+    pointer-events:none;
+    z-index:-2;
+}
+
+.particles span{
+    position:absolute;
+    width:3px;
+    height:3px;
+    background:white;
+    border-radius:50%;
+    opacity:0.15;
+    animation: float 10s linear infinite;
+}
+
+@keyframes float{
+    from{transform:translateY(100vh); opacity:0;}
+    20%{opacity:0.3;}
+    to{transform:translateY(-10vh); opacity:0;}
+}
+
+/* CONTAINER */
+.container{
+    position:relative;
+    z-index:2;
+    max-width:1100px;
+    margin:auto;
+    padding:60px 20px 30px;
+}
+
+.hero{
+    text-align:center;
+    margin-bottom:40px;
+}
+
+.hero h1{
+    font-size:3rem;
+    margin-bottom:10px;
+}
+
+.hero p{
+    color:#cbd5e1;
+}
+
+/* PODIUM */
+.podium{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:20px;
+    align-items:end;
+    margin-bottom:40px;
+}
+
+.place{
+    border-radius:20px;
+    padding:25px;
+    text-align:center;
+    backdrop-filter:blur(15px);
+    background:rgba(255,255,255,0.08);
+    border:1px solid rgba(255,255,255,0.12);
+}
+
+.first{min-height:320px;border:2px solid gold;}
+.second{min-height:260px;}
+.third{min-height:220px;}
+
+.medal{font-size:3rem;margin-bottom:10px;}
+.name{font-size:1.5rem;font-weight:700;}
+.balance{font-size:2rem;margin-top:15px;font-weight:800;}
+
+.positive{color:#4ade80;}
+.negative{color:#f87171;}
+
+.board{
+    background:rgba(255,255,255,0.08);
+    border-radius:20px;
+    padding:25px;
+    backdrop-filter:blur(15px);
+}
+
+.footer{
+    text-align:center;
+    margin-top:20px;
+    color:#94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="livebar">
+    <div class="ticker" id="ticker">
+        🔴 LIVE WORLD CUP CHALLENGE • Loading...
+    </div>
+</div>
+
+<div class="bg"></div>
+
+<img src="trophy.png" class="trophy" />
+
+<div class="particles" id="particles"></div>
+
+<div class="container">
+
+    <div class="hero">
+        <h1>⚽ World Cup Challenge</h1>
+        <p>$1 per match • Highest balance wins</p>
+    </div>
+
+    <div id="content"></div>
+
+</div>
+
+<script>
+
+const START_BALANCE = 100;
+
+const players = [
+{ name:"Bucky", wallet:"0x9509ff52c93ffb76219b185ab7d005db681d7050" },
+{ name:"Aust", wallet:"0x75f630b83a28c1d7da704427f2c0c74f48ffa79e" },
+{ name:"John", wallet:"0x2ec609f159cf1f12452ece758d6efc5b7f666b1d" }
+];
+
+function createParticles(){
+    const container = document.getElementById("particles");
+
+    for(let i=0;i<20;i++){
+        const s = document.createElement("span");
+        s.style.left = Math.random()*100 + "%";
+        s.style.animationDuration = (5+Math.random()*10)+"s";
+        container.appendChild(s);
+    }
+}
+createParticles();
+
+async function getBalance(wallet){
+    try{
+        const res = await fetch(
+            `https://data-api.polymarket.com/value?user=${wallet}`
+        );
+
+        const data = await res.json();
+
+        return Number(data?.[0]?.value || 0);
+
+    }catch(err){
+        console.error(err);
+        return 0;
+    }
+}
+
+function pnl(b){
+    return ((b-START_BALANCE)/START_BALANCE)*100;
+}
+
+function updateTicker(results){
+    const leader = results[0];
+    const second = results[1] || leader;
+
+	const gap = Math.abs(
+		leader.balance - second.balance
+	).toFixed(2);
+
+    document.getElementById("ticker").textContent =
+        `🔴 LIVE • ${leader.name} leads by $${gap}`;
+}
+
+async function refresh(){
+
+    const results = [];
+
+    for(const p of players){
+        const balance = await getBalance(p.wallet);
+        results.push({...p,balance});
+    }
+
+    results.sort((a,b)=>b.balance-a.balance);
+
+    const medals=["🥇","🥈","🥉"];
+
+    let podium = `<div class="podium">`;
+
+    results.slice(0,3).forEach((p,i)=>{
+
+        const percent = pnl(p.balance);
+
+        podium += `
+        <div class="place ${i===0?"first":i===1?"second":"third"}">
+            <div class="medal">${medals[i]}</div>
+            <div class="name">${p.name}</div>
+            <div class="balance">$${p.balance.toFixed(2)}</div>
+            <div class="${percent>=0?"positive":"negative"}">
+                ${percent>=0?"+":""}${percent.toFixed(1)}%
+            </div>
+        </div>`;
+    });
+
+    podium += `</div>`;
+
+    document.getElementById("content").innerHTML = podium;
+
+    updateTicker(results);
+}
+
+refresh();
+setInterval(refresh,30000);
+
+</script>
+
+</body>
+</html>

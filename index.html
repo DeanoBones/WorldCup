@@ -118,7 +118,7 @@ body{
 
 .hero{
     text-align:center;
-    margin-bottom:20px;
+    margin-bottom:40px;
 }
 
 .hero h1{
@@ -130,29 +130,13 @@ body{
     color:#cbd5e1;
 }
 
-/* BUTTON */
-button{
-    background:#1f2937;
-    color:white;
-    border:1px solid #374151;
-    padding:10px 15px;
-    border-radius:10px;
-    cursor:pointer;
-    margin-top:10px;
-}
-
-#rpcResult{
-    margin-top:10px;
-    color:#cbd5e1;
-}
-
 /* PODIUM */
 .podium{
     display:grid;
     grid-template-columns:1fr 1fr 1fr;
     gap:20px;
     align-items:end;
-    margin-top:30px;
+    margin-bottom:40px;
 }
 
 .place{
@@ -162,8 +146,30 @@ button{
     backdrop-filter:blur(15px);
     background:rgba(255,255,255,0.08);
     border:1px solid rgba(255,255,255,0.12);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    cursor:pointer;
 }
 
+.place:hover{
+    transform: translateY(-8px) scale(1.03);
+    background:rgba(255,255,255,0.12);
+    box-shadow:0 15px 40px rgba(0,0,0,0.4);
+}
+
+/* subtle glow for 1st place */
+.first:hover{
+    box-shadow:0 0 25px rgba(255,215,0,0.25), 0 15px 40px rgba(0,0,0,0.4);
+}
+.name{
+    font-size:1.5rem;
+    font-weight:700;
+    letter-spacing:0.5px;
+    transition: color 0.2s ease;
+}
+
+.place:hover .name{
+    color:#ffffff;
+}
 .first{min-height:320px;border:2px solid gold;}
 .second{min-height:260px;}
 .third{min-height:220px;}
@@ -192,10 +198,6 @@ button{
     <div class="hero">
         <h1>⚽ World Cup Challenge</h1>
         <p>$1 per match • Highest balance wins</p>
-
-        <!-- SAFE RPC TEST -->
-        <button id="rpcTestBtn">Test RPC Connection</button>
-        <div id="rpcResult"></div>
     </div>
 
     <div id="content"></div>
@@ -226,7 +228,10 @@ function createParticles(){
 }
 createParticles();
 
-// REAL BALANCE (stable RPC)
+// stable public RPC
+const RPC_URL = "https://1rpc.io/matic";
+
+// get pUSD balance
 async function getBalance(wallet){
     try{
 
@@ -237,7 +242,7 @@ async function getBalance(wallet){
 
         const data = "0x70a08231" + address;
 
-        const res = await fetch("https://rpc.ankr.com/polygon", {
+        const res = await fetch(RPC_URL, {
             method:"POST",
             headers:{"Content-Type":"application/json"},
             body:JSON.stringify({
@@ -318,35 +323,6 @@ async function refresh(){
 }
 
 refresh();
-setInterval(refresh,30000);
-
-// SAFE RPC TEST BUTTON
-document.getElementById("rpcTestBtn").onclick = async function(){
-
-    document.getElementById("rpcResult").textContent = "Testing...";
-
-    try{
-        const res = await fetch("https://rpc.ankr.com/polygon", {
-            method:"POST",
-            headers:{"Content-Type":"application/json"},
-            body:JSON.stringify({
-                jsonrpc:"2.0",
-                id:1,
-                method:"eth_blockNumber",
-                params:[]
-            })
-        });
-
-        const json = await res.json();
-
-        document.getElementById("rpcResult").textContent =
-            "RPC OK: " + json.result;
-
-    }catch(err){
-        document.getElementById("rpcResult").textContent =
-            "RPC FAILED: " + err.message;
-    }
-};
 
 </script>
 
